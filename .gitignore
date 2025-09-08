@@ -1,0 +1,14 @@
+# Python 
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+# Data / models 
+*.csv
+*.db
+*.h5
+*.keras
+*.joblib
+# App artifacts 
+local_weather_model/
