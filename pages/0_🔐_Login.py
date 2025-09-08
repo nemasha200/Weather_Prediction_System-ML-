@@ -1,19 +1,21 @@
-# pages/0_Login.py
 import streamlit as st
 from time import sleep
 from db import get_user, verify_password
 import base64, os
 
+# Set the page configuration
 st.set_page_config(
     page_title="🔐 Login",
     page_icon="🔐",
-    layout="centered",
-    initial_sidebar_state="collapsed",
+    layout="centered",  # Keeps the layout centered
+    initial_sidebar_state="auto",  # Ensures sidebar is hidden
 )
 
 SHOW_BG_DEBUG = False  # True only when debugging paths
 
-# ---------------- BG helpers ----------------
+# ======================
+# BG image helpers
+# ======================
 def _read_file_b64(path: str):
     try:
         with open(path, "rb") as f:
@@ -22,12 +24,15 @@ def _read_file_b64(path: str):
         return None
 
 def _get_bg():
-    for p in ["pages/log.jpg", "pages/log.png", "static/log.jpg", "static/log.png", "log.jpg", "log.png"]:
+    # Try common spots; first one that exists wins
+    for p in ["pages/log.jpg", "pages/cloud2.png", "static/cloud2.jpg", "static/log.png", "log.jpg", "log.png"]:
         if os.path.exists(p):
             return p, _read_file_b64(p)
     return None, None
 
 bg_path, bg_b64 = _get_bg()
+
+# Optional debug line (hidden in production)
 if SHOW_BG_DEBUG:
     dbg = st.empty()
     if bg_b64:
@@ -35,7 +40,9 @@ if SHOW_BG_DEBUG:
     else:
         dbg.warning("⚠️ Could not find log.jpg/log.png. Using fallback.")
 
-# ---------------- Query param helpers ----------------
+# ======================
+# Query param helpers
+# ======================
 try:
     _HAS_QP = hasattr(st, "query_params")
 except Exception:
@@ -64,25 +71,24 @@ def _set_qp_dict(d: dict):
     except Exception:
         pass
 
-# ---------------- Handle ?logout ----------------
-qp = _get_qp_dict()
-if any(k.lower() == "logout" for k in qp.keys()):
-    st.session_state["auth_ok"] = False
-    st.session_state.pop("auth_user", None)
-    st.session_state.pop("auth_name", None)
-    st.session_state["auth_remember"] = False
-    _set_qp_dict({k: v for k, v in qp.items() if k.lower() != "logout"})
-    st.toast("Logged out", icon="✅")
 
-# ---------------- CSS ----------------
+
+# ======================
+# CSS — clear Streamlit backgrounds + add fixed bg layer
+# ======================
 if bg_b64:
     bg_css = f"""
+    /* Clear Streamlit default bg so ours shows */
     html, body, .stApp, [data-testid="stAppViewContainer"], section.main {{
-      background: transparent !important;
+      background: lightblue;
     }}
+    /* Full-page background layer (stays across reruns) */
     body::before {{
       content: "";
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
       background: url("data:image/jpg;base64,{bg_b64}") no-repeat center center fixed;
       background-size: cover;
     }}
@@ -102,19 +108,15 @@ st.markdown(
       --topbar-border: rgba(255,255,255,.08);
     }}
 
-    /* Hide sidebar + footer chrome but keep toolbar visible */
-    div[data-testid="stSidebar"], div[data-testid="stSidebarNav"] {{ display: none !important; }}
-    footer {{ visibility: hidden !important; }}
-
+    
     {bg_css}
 
     /* ===== TOP HEADER BAR ONLY (dark blue) ===== */
-    /* Works across Streamlit versions using data-testid */
     header[data-testid="stHeader"] {{
       background: var(--topbar) !important;
       border-bottom: 1px solid var(--topbar-border) !important;
     }}
-    header[data-testid="stHeader"] > div {{      /* inner wrapper */
+    header[data-testid="stHeader"] > div {{
       background: var(--topbar) !important;
     }}
     /* Fallback for specific emotion class seen in your app */
@@ -126,7 +128,23 @@ st.markdown(
       color: #e6f0ff !important;
     }}
 
-    /* Center container above background layer */
+    
+
+    /* Centered Title in the header */
+    header[data-testid="stHeader"] > div > div {{
+    content: "Weather Prediction System";
+    font-size: 30px; font-weight: bold; color: white;
+    position: absolute; left: 50%; transform: translateX(-50%);
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;  /* Increased font size */
+      font-weight: bold;
+      text-align: center;
+      color: white;
+      padding: 10px 0;
+    }}
+
+    /* Center container, layered above bg */
     .block-container {{
       padding-top: 0 !important; padding-bottom: 0 !important;
       min-height: 100dvh; display:flex; align-items:center; justify-content:center; max-width: 820px;
@@ -145,18 +163,18 @@ st.markdown(
       color: #fff;
     }}
     .login-card:hover {{ transform: translateY(-1px); }}
+    
 
-    .submini {{ color:#cbd5e1; font-size:.85rem; letter-spacing:.10em; font-weight:800; }}
-    .heading {{ font-weight:900; font-size:28px; margin:6px 0 2px; letter-spacing:.01em; }}
-    .hint {{ color:#d1d5db; font-size:.92rem; margin:0 0 14px; }}
+    .submini {{ color:black; font-size:1rem; letter-spacing:.10em; font-weight:800; }}
+    .heading {{ font-weight:900; font-size:2.5rem; margin:6px 0 2px; letter-spacing:.01em; }}
+    .hint {{ color:black; font-size:1.2rem; margin:0 0 14px; }}
 
     section.main div[data-baseweb="input"] > div {{ border-radius: 14px; }}
     .stTextInput>div>div>input {{ padding-top: 12px; padding-bottom: 12px; font-weight:600; }}
     .stTextInput label {{ font-weight: 700; }}
-    .stToggle > label {{ font-weight: 600; }}
     .stCheckbox>label {{ font-weight: 600; }}
 
-    .stTextInput input:focus, .stCheckbox input:focus, .stToggle input:focus {{
+    .stTextInput input:focus, .stCheckbox input:focus{{
       outline: none !important; box-shadow: 0 0 0 4px rgba(59,130,246,.25) !important; border-radius: 12px;
     }}
 
@@ -179,7 +197,8 @@ st.markdown(
     .top-links {{ position:fixed; top:12px; right:18px; z-index:10000; display:flex; gap:10px; }}
     .top-links a {{
       background:#ffffffcc; color:#003366; font-weight:800; text-decoration:none; padding:8px 14px;
-      border-radius:999px; border:1px solid #e5e7eb; box-shadow:0 2px 6px rgba(0,0,0,.08); backdrop-filter:blur(8px);
+      border-radius:999px; border:1px solid #e5e7eb; box-shadow:0 2px 6px rgba(0,0,0,.08); display:inline-block;
+      backdrop-filter: blur(8px);
     }}
     [data-theme="dark"] .top-links a {{ background:#0b1220cc; color:#e6f0ff; border-color:#1f2937; }}
     .top-links a:hover {{ filter:brightness(1.05); }}
@@ -191,39 +210,50 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---------------- Redirect helper ----------------
+# ======================
+# Redirect helper
+# ======================
 def _go_to_weather() -> bool:
-    for t in ["7-Day Weather Forecast", "🌦️ weather_app", "weather_app.py", "Home"]:
+    targets = ["7-Day Weather Forecast", "🌦️ weather_app", "weather_app.py", "Home"]
+    for t in targets:
         try:
-            st.switch_page(t); return True
+            st.switch_page(t)
+            return True
         except Exception:
             continue
     return False
 
-# ---------------- Auto-redirect ----------------
-if st.session_state.get("auth_ok") and st.session_state.get("auth_remember", True):
-    if _go_to_weather(): st.stop()
-    else: st.info("You're already signed in. Open the main page from the sidebar.", icon="✅")
+# ======================
+# Auto-redirect if already logged in
+# # ======================
+# if st.session_state.get("auth_ok") and st.session_state.get("auth_remember", True):
+#     if _go_to_weather():
+#         st.stop()
+#     else:
+#         st.info("You're already signed in. Open the main page from the sidebar.", icon="✅")
 
-# ---------------- UI ----------------
+# ======================
+# UI
+# ======================
 st.markdown('<div class="login-card">', unsafe_allow_html=True)
 st.markdown('<div class="submini">WELCOME BACK</div>', unsafe_allow_html=True)
 st.markdown('<div class="heading">Sign in to continue 🔐</div>', unsafe_allow_html=True)
 st.markdown('<div class="hint">Use your username or email and password to access the dashboard.</div>', unsafe_allow_html=True)
 
+
 with st.form("login_form", clear_on_submit=False, enter_to_submit=True):
-    c1, c2 = st.columns([1, 1])
+    c1, c2 = st.columns([100,2])
     with c1:
         username = st.text_input("Email / Username", placeholder="👤 e.g., admin", help="Usernames are case-insensitive")
-    with c2:
-        show_pw = st.toggle("Show password", value=False, key="show_pw")
+    
 
-    password = st.text_input("Password", type=("default" if show_pw else "password"),
-                             placeholder="🔒 ••••••••", help="Keep your account secure")
+    password = st.text_input("Password", placeholder="🔒 ••••••••", help="Keep your account secure")
     remember = st.checkbox("Remember me", value=True, help="Stay signed in on this device")
-    login_btn = st.form_submit_button("Log in")
+    login_btn = st.form_submit_button("Log in to your account")
 
-# ---------------- Submit handler ----------------
+# ======================
+# Submit handler
+# ======================
 if login_btn:
     u = (username or "").strip()
     p = (password or "").strip()
@@ -240,7 +270,6 @@ if login_btn:
                 "auth_name": row[2],
                 "auth_remember": bool(remember),
             })
-            if SHOW_BG_DEBUG: dbg.empty()
             st.success("Login successful ✅ Redirecting…")
             sleep(0.05)
             _go_to_weather()
@@ -248,9 +277,10 @@ if login_btn:
         else:
             st.error("Invalid username or password")
 
-# ---------------- Bottom actions ----------------
+# ======================
+# Bottom actions
+# ======================
 st.markdown('<div class="actions-row">', unsafe_allow_html=True)
-st.caption("🔁 Forgot password? ", help="Ask your admin to reset your password.")
 st.markdown('<div class="link-btn">', unsafe_allow_html=True)
 if st.button("Create a new account"):
     try:
@@ -259,6 +289,9 @@ if st.button("Create a new account"):
         try:
             st.switch_page("📝 Register")
         except Exception:
-            qp = _get_qp_dict(); qp.update({"register": "1"}); _set_qp_dict(qp); st.rerun()
+            qp = _get_qp_dict()
+            qp.update({"register": "1"})
+            _set_qp_dict(qp)
+            st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)

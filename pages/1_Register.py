@@ -15,10 +15,7 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-/* Hide app chrome for a clean auth screen */
-div[data-testid="stSidebar"], div[data-testid="stSidebarNav"] { display: none !important; }
-header [data-testid="stToolbar"] { visibility: hidden !important; }
-footer { visibility: hidden !important; }
+
 
 /* Background: soft gradients + dark-mode aware */
 html, body, [data-testid="stAppViewContainer"] {

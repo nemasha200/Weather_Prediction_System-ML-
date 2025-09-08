@@ -116,7 +116,7 @@ code.small { font-size:.85em; word-break:break-all; }
 # ----------------------
 c1, c2 = st.columns([1,1])
 with c1:
-    st.title("👥 Users")
+    st.title("👥 Registered Users")
 with c2:
     st.markdown(
         '<div style="text-align:right;margin-top:8px;">'
@@ -125,7 +125,6 @@ with c2:
         unsafe_allow_html=True
     )
 
-st.caption(f"Database: `{os.path.basename(DB_PATH)}` • Table: `users`")
 
 # ----------------------
 # Inline editor
