@@ -90,6 +90,31 @@ if not st.session_state.get("auth_ok", False):
     st.warning("Please log in first (see 🔐 Login page).", icon="🔑")
     st.stop()
 
+    
+    # ─────────── Admin Guard (put near the top of weather_app.py) ───────────
+import streamlit as st
+
+# Not logged in? → go to Login
+if not st.session_state.get("auth_ok", False):
+    for target in ("pages/0_🔐_Login.py", "pages/0_Login.py", "🔐 Login", "login.py"):
+        try:
+            st.switch_page(target); st.stop()
+        except Exception:
+            pass
+    st.error("Please log in first."); st.stop()
+
+# Logged in but not admin? → bounce to User Dashboard
+if st.session_state.get("auth_role") != "admin":
+    st.warning("Admins only. Redirecting to your dashboard…", icon="🔒")
+    for target in ("pages/3_User_Dashboard.py", "🧭 User Dashboard", "User Dashboard"):
+        try:
+            st.switch_page(target); st.stop()
+        except Exception:
+            pass
+    st.stop()
+# ────────────────────────────────────────────────────────────────────────
+
+
 
 
 # ----------------------

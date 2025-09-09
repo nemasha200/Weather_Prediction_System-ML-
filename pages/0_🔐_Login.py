@@ -1,21 +1,24 @@
+# login.py
 import streamlit as st
 from time import sleep
 from db import get_user, verify_password
 import base64, os
 
-# Set the page configuration
+# ──────────────────────────────────────────────────────────────────────────────
+# Page config
+# ──────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="🔐 Login",
     page_icon="🔐",
-    layout="centered",  # Keeps the layout centered
-    initial_sidebar_state="auto",  # Ensures sidebar is hidden
+    layout="centered",
+    initial_sidebar_state="auto",
 )
 
 SHOW_BG_DEBUG = False  # True only when debugging paths
 
-# ======================
+# ──────────────────────────────────────────────────────────────────────────────
 # BG image helpers
-# ======================
+# ──────────────────────────────────────────────────────────────────────────────
 def _read_file_b64(path: str):
     try:
         with open(path, "rb") as f:
@@ -24,7 +27,6 @@ def _read_file_b64(path: str):
         return None
 
 def _get_bg():
-    # Try common spots; first one that exists wins
     for p in ["pages/log.jpg", "pages/cloud2.png", "static/cloud2.jpg", "static/log.png", "log.jpg", "log.png"]:
         if os.path.exists(p):
             return p, _read_file_b64(p)
@@ -32,63 +34,71 @@ def _get_bg():
 
 bg_path, bg_b64 = _get_bg()
 
-# Optional debug line (hidden in production)
-if SHOW_BG_DEBUG:
-    dbg = st.empty()
-    if bg_b64:
-        dbg.caption(f"✅ Background loaded from **{bg_path}**")
-    else:
-        dbg.warning("⚠️ Could not find log.jpg/log.png. Using fallback.")
-
-# ======================
-# Query param helpers
-# ======================
-try:
-    _HAS_QP = hasattr(st, "query_params")
-except Exception:
-    _HAS_QP = False
-
-def _get_qp_dict():
-    if _HAS_QP:
-        try:
-            return dict(st.query_params)
-        except Exception:
-            pass
+# ──────────────────────────────────────────────────────────────────────────────
+# Navigation helpers
+# ──────────────────────────────────────────────────────────────────────────────
+def _go_to_register_button():
     try:
-        return st.experimental_get_query_params()
+        st.switch_page("pages/1_Register.py")
     except Exception:
-        return {}
+        for c in ["📝 Register", "Register", "1_Register", "pages/Register.py", "pages/register.py"]:
+            try:
+                st.switch_page(c); return
+            except Exception:
+                continue
+        st.error("Could not find the Register page. Check that `pages/1_Register.py` exists and you run app from project root.")
 
-def _set_qp_dict(d: dict):
-    if _HAS_QP:
+def _go_to_weather() -> bool:
+    """Admin landing"""
+    candidates = [
+        "weather_app.py",          # file at project root
+        "pages/weather_app.py",    # file inside pages
+        "🌦️ weather_app",          # page label with emoji
+        "weather_app",             # page label plain
+        "7-Day Weather Forecast",  # alt label
+        "Home",                    # fallback
+    ]
+    for c in candidates:
         try:
-            st.query_params = d
-            return
+            st.switch_page(c); return True
         except Exception:
-            pass
-    try:
-        st.experimental_set_query_params(**d)
-    except Exception:
-        pass
+            continue
+    return False
 
+def _go_to_user_dashboard() -> bool:
+    """Registered user landing"""
+    candidates = [
+        "pages/3_User_Dashboard.py",
+        "3_User_Dashboard.py",
+        "🧭 User Dashboard",
+        "User Dashboard",
+        "3_User_Dashboard",
+        "pages/User_Dashboard.py",
+    ]
+    for c in candidates:
+        try:
+            st.switch_page(c); return True
+        except Exception:
+            continue
+    return False
 
+# ──────────────────────────────────────────────────────────────────────────────
+# RBAC helper
+# ──────────────────────────────────────────────────────────────────────────────
+def _is_admin(u: str, p: str) -> bool:
+    return u.strip().lower() == "kamal1" and p == "hello123kamal"
 
-# ======================
-# CSS — clear Streamlit backgrounds + add fixed bg layer
-# ======================
+# ──────────────────────────────────────────────────────────────────────────────
+# CSS — look & feel
+# ──────────────────────────────────────────────────────────────────────────────
 if bg_b64:
     bg_css = f"""
-    /* Clear Streamlit default bg so ours shows */
     html, body, .stApp, [data-testid="stAppViewContainer"], section.main {{
       background: lightblue;
     }}
-    /* Full-page background layer (stays across reruns) */
     body::before {{
       content: "";
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
       background: url("data:image/jpg;base64,{bg_b64}") no-repeat center center fixed;
       background-size: cover;
     }}
@@ -104,194 +114,162 @@ st.markdown(
     f"""
     <style>
     :root {{
-      --topbar: #0a1c3d;           /* dark blue you want */
+      --topbar: #0a1c3d;
       --topbar-border: rgba(255,255,255,.08);
+      --brand-blue: #0a1c3d;
     }}
 
-    
     {bg_css}
 
-    /* ===== TOP HEADER BAR ONLY (dark blue) ===== */
     header[data-testid="stHeader"] {{
-      background: var(--topbar) !important;
-      border-bottom: 1px solid var(--topbar-border) !important;
+      background: #0a1c3d !important;
+      border-bottom: 1px solid rgba(255,255,255,.08) !important;
     }}
-    header[data-testid="stHeader"] > div {{
-      background: var(--topbar) !important;
-    }}
-    /* Fallback for specific emotion class seen in your app */
-    .st-emotion-cache-1ffuo7c {{
-      background: var(--topbar) !important;
-    }}
-    /* Make text/icons readable on dark blue */
-    header[data-testid="stHeader"] * {{
-      color: #e6f0ff !important;
-    }}
+    header[data-testid="stHeader"] * {{ color: #e6f0ff !important; }}
 
-    
-
-    /* Centered Title in the header */
-    header[data-testid="stHeader"] > div > div {{
-    content: "Weather Prediction System";
-    font-size: 30px; font-weight: bold; color: white;
-    position: absolute; left: 50%; transform: translateX(-50%);
-      justify-content: center;
-      align-items: center;
-      font-size: 2rem;  /* Increased font size */
-      font-weight: bold;
-      text-align: center;
-      color: white;
-      padding: 10px 0;
-    }}
-
-    /* Center container, layered above bg */
     .block-container {{
       padding-top: 0 !important; padding-bottom: 0 !important;
       min-height: 100dvh; display:flex; align-items:center; justify-content:center; max-width: 820px;
       position: relative; z-index: 1;
     }}
 
-    /* Glass card */
     .login-card {{
       width: min(800px, 96vw);
       padding: 28px 26px 24px 26px; border-radius: 22px;
       background: rgba(0,0,0,0.55);
       border: 1px solid rgba(148,163,184,0.28);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
       box-shadow: 0 24px 60px rgba(2,6,23,.18);
-      transition: transform .2s ease;
       color: #fff;
     }}
-    .login-card:hover {{ transform: translateY(-1px); }}
-    
 
     .submini {{ color:black; font-size:1rem; letter-spacing:.10em; font-weight:800; }}
     .heading {{ font-weight:900; font-size:2.5rem; margin:6px 0 2px; letter-spacing:.01em; }}
     .hint {{ color:black; font-size:1.2rem; margin:0 0 14px; }}
 
-    section.main div[data-baseweb="input"] > div {{ border-radius: 14px; }}
     .stTextInput>div>div>input {{ padding-top: 12px; padding-bottom: 12px; font-weight:600; }}
     .stTextInput label {{ font-weight: 700; }}
     .stCheckbox>label {{ font-weight: 600; }}
 
-    .stTextInput input:focus, .stCheckbox input:focus{{
+    .stTextInput input:focus, .stCheckbox input:focus, .stToggle input:focus {{
       outline: none !important; box-shadow: 0 0 0 4px rgba(59,130,246,.25) !important; border-radius: 12px;
     }}
 
     .stButton>button, button[kind="primary"] {{
       height: 48px; border-radius: 999px !important; font-weight: 900; letter-spacing:.02em;
-      background: linear-gradient(90deg, #1e40af 0%, #0ea5e9 100%) !important;
-      border: none; color: #fff !important; width: 100%;
-      box-shadow: 0 10px 18px rgba(2,6,23,.15); transition: transform .06s ease, filter .12s ease;
+      background: #b1e0e0; border: none; color: black !important;
+      box-shadow: 0 10px 18px rgba(2,6,23,.15);
+      width: auto !important; padding: 0 40px;
     }}
-    .stButton>button:hover {{ filter: brightness(1.03); }}
+    .stButton>button:hover {{ filter: none !important; }}
     .stButton>button:active {{ transform: translateY(1px); }}
 
-    .actions-row {{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap: 10px; margin-top: 8px; }}
-    .link-btn>button {{
-      background: transparent !important; color:#93c5fd !important; box-shadow:none !important;
-      border: none !important; height: auto; padding: 0 !important; font-weight:800; text-decoration: underline;
+    /* Inline sign-up row */
+    .signup-row {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      margin-left: 40px;
+      color: black;
     }}
-    .link-btn>button:hover {{ opacity:.9 }}
-
-    .top-links {{ position:fixed; top:12px; right:18px; z-index:10000; display:flex; gap:10px; }}
-    .top-links a {{
-      background:#ffffffcc; color:#003366; font-weight:800; text-decoration:none; padding:8px 14px;
-      border-radius:999px; border:1px solid #e5e7eb; box-shadow:0 2px 6px rgba(0,0,0,.08); display:inline-block;
-      backdrop-filter: blur(8px);
+    .signup-row .pill-btn {{
+      display:inline-flex; align-items:center; justify-content:center;
+      height: 44px; padding: 0 22px; border-radius: 999px;
+      background: gray; font-weight: 900; letter-spacing:.02em;
+      text-decoration: none; color: #000;
+      box-shadow: 0 10px 18px rgba(2,6,23,.15);
     }}
-    [data-theme="dark"] .top-links a {{ background:#0b1220cc; color:#e6f0ff; border-color:#1f2937; }}
-    .top-links a:hover {{ filter:brightness(1.05); }}
-
-    .tiny {{ font-size:.84rem; color:#e5e7eb; }}
+    .signup-row .pill-btn:active {{ transform: translateY(1px); }}
     </style>
-    <div class="top-links"><a class="logout" href="?logout=1">Logout</a></div>
     """,
     unsafe_allow_html=True,
 )
 
-# ======================
-# Redirect helper
-# ======================
-def _go_to_weather() -> bool:
-    targets = ["7-Day Weather Forecast", "🌦️ weather_app", "weather_app.py", "Home"]
-    for t in targets:
-        try:
-            st.switch_page(t)
-            return True
-        except Exception:
-            continue
-    return False
-
-# ======================
-# Auto-redirect if already logged in
-# # ======================
-# if st.session_state.get("auth_ok") and st.session_state.get("auth_remember", True):
-#     if _go_to_weather():
-#         st.stop()
-#     else:
-#         st.info("You're already signed in. Open the main page from the sidebar.", icon="✅")
-
-# ======================
+# ──────────────────────────────────────────────────────────────────────────────
 # UI
-# ======================
+# ──────────────────────────────────────────────────────────────────────────────
 st.markdown('<div class="login-card">', unsafe_allow_html=True)
 st.markdown('<div class="submini">WELCOME BACK</div>', unsafe_allow_html=True)
 st.markdown('<div class="heading">Sign in to continue 🔐</div>', unsafe_allow_html=True)
 st.markdown('<div class="hint">Use your username or email and password to access the dashboard.</div>', unsafe_allow_html=True)
 
-
 with st.form("login_form", clear_on_submit=False, enter_to_submit=True):
-    c1, c2 = st.columns([100,2])
+    c1, c2 = st.columns([10, 1])
     with c1:
         username = st.text_input("Email / Username", placeholder="👤 e.g., admin", help="Usernames are case-insensitive")
-    
+    with c2:
+        show_pw = st.toggle("", value=False, key="show_pw")
 
-    password = st.text_input("Password", placeholder="🔒 ••••••••", help="Keep your account secure")
+    password = st.text_input(
+        "Password",
+        type=("default" if show_pw else "password"),
+        placeholder="🔒 ••••••••",
+        help="Keep your account secure",
+    )
     remember = st.checkbox("Remember me", value=True, help="Stay signed in on this device")
-    login_btn = st.form_submit_button("Log in to your account")
 
-# ======================
-# Submit handler
-# ======================
+    left, mid, right = st.columns([1, 1, 1])
+    with mid:
+        login_btn = st.form_submit_button("Log in to the Dashboard")
+
+# —— Inline "Don't have an account?  [Create one]"
+signup_col1, signup_col2 = st.columns([1, 2])
+with signup_col1:
+    st.markdown('<div class="signup-row"><span>Don’t have an account?</span></div>', unsafe_allow_html=True)
+with signup_col2:
+    if hasattr(st, "page_link"):
+        st.page_link("pages/1_Register.py", label="Create new account", icon="➕")
+    else:
+        if st.button("Create one", key="create_one_fallback"):
+            _go_to_register_button()
+            st.stop()
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Submit handler with RBAC
+# ──────────────────────────────────────────────────────────────────────────────
 if login_btn:
     u = (username or "").strip()
     p = (password or "").strip()
+
     if not u or not p:
         st.error("Please enter **both** username and password.")
     elif len(p) < 4:
         st.error("Password seems too short. Please check and try again.")
     else:
-        row = get_user(u)  # (id, username, full_name, password_hash)
+        # 1) Admin hard-gate (doesn't need to be in DB)
+        if _is_admin(u, p):
+            st.session_state.update({
+                "auth_ok": True,
+                "auth_user": "kamal1",
+                "auth_name": "Administrator",
+                "auth_role": "admin",
+                "auth_remember": bool(remember),
+            })
+            st.success("Admin login successful ✅ Redirecting…")
+            sleep(0.05)
+            if not _go_to_weather():
+                st.warning("Could not navigate to weather_app.py. Check the file name/location.")
+                st.rerun()
+            st.stop()
+
+        # 2) Normal registered users (must exist in auth.db)
+        row = get_user(u)  # expected: (id, username, full_name, password_hash)
         if row and verify_password(p, row[3]):
             st.session_state.update({
                 "auth_ok": True,
                 "auth_user": row[1],
                 "auth_name": row[2],
+                "auth_role": "user",
                 "auth_remember": bool(remember),
             })
             st.success("Login successful ✅ Redirecting…")
             sleep(0.05)
-            _go_to_weather()
+            if not _go_to_user_dashboard():
+                st.warning("Could not navigate to 3_User_Dashboard page. Check the file name/location.")
+                st.rerun()
             st.stop()
         else:
             st.error("Invalid username or password")
 
-# ======================
-# Bottom actions
-# ======================
-st.markdown('<div class="actions-row">', unsafe_allow_html=True)
-st.markdown('<div class="link-btn">', unsafe_allow_html=True)
-if st.button("Create a new account"):
-    try:
-        st.switch_page("pages/1_Register.py")
-    except Exception:
-        try:
-            st.switch_page("📝 Register")
-        except Exception:
-            qp = _get_qp_dict()
-            qp.update({"register": "1"})
-            _set_qp_dict(qp)
-            st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)  # close .login-card

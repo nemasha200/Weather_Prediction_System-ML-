@@ -1,6 +1,7 @@
 # pages/1_Register.py — Create account page (uses db.create_user)
 import streamlit as st
 from db import create_user, get_user
+import base64, os
 
 st.set_page_config(
     page_title="📝 Register",
@@ -9,117 +10,138 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# --------------------
-# Styles (modern UI only — logic unchanged)
-# --------------------
-st.markdown(
+SHOW_BG_DEBUG = False  # set True only when debugging bg paths
+
+# ======================
+# BG image helpers
+# ======================
+def _read_file_b64(path: str):
+    try:
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
+    except Exception:
+        return None
+
+def _get_bg():
+    for p in ["pages/log.jpg", "pages/cloud2.png", "static/cloud2.jpg",
+              "static/log.png", "log.jpg", "log.png"]:
+        if os.path.exists(p):
+            return p, _read_file_b64(p)
+    return None, None
+
+bg_path, bg_b64 = _get_bg()
+
+# ======================
+# Query param helpers
+# ======================
+try:
+    _HAS_QP = hasattr(st, "query_params")
+except Exception:
+    _HAS_QP = False
+
+def _get_qp_dict():
+    if _HAS_QP:
+        try:
+            return dict(st.query_params)
+        except Exception:
+            pass
+    try:
+        return st.experimental_get_query_params()
+    except Exception:
+        return {}
+
+def _set_qp_dict(d: dict):
+    if _HAS_QP:
+        try:
+            st.query_params = d
+            return
+        except Exception:
+            pass
+    try:
+        st.experimental_set_query_params(**d)
+    except Exception:
+        pass
+
+
+# ======================
+# CSS styling
+# ======================
+if bg_b64:
+    bg_css = f"""
+    html, body, .stApp, [data-testid="stAppViewContainer"], section.main {{
+      background: lightblue;
+    }}
+    body::before {{
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: url("data:image/jpg;base64,{bg_b64}") no-repeat center center fixed;
+      background-size: cover;
+    }}
     """
+else:
+    bg_css = """
+    html, body, .stApp, [data-testid="stAppViewContainer"], section.main { background: transparent !important; }
+    body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: linear-gradient(135deg, #0b1220 0%, #0f1a14 100%); }
+    """
+
+st.markdown(
+    f"""
 <style>
+:root {{
+  --topbar: #0a1c3d;
+  --topbar-border: rgba(255,255,255,.08);
+}}
 
+{bg_css}
 
-/* Background: soft gradients + dark-mode aware */
-html, body, [data-testid="stAppViewContainer"] {
-  background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(59,130,246,.10), transparent 50%),
-    radial-gradient(1200px 600px at 80% 90%, rgba(16,185,129,.10), transparent 50%),
-    linear-gradient(135deg, #eef2ff 0%, #f0fdf4 100%) !important;
-}
-[data-theme="dark"] html,
-[data-theme="dark"] body,
-[data-theme="dark"] [data-testid="stAppViewContainer"] {
-  background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(59,130,246,.20), transparent 50%),
-    radial-gradient(1200px 600px at 80% 90%, rgba(16,185,129,.18), transparent 50%),
-    linear-gradient(135deg, #0b1220 0%, #0f1a14 100%) !important;
-}
+header[data-testid="stHeader"] {{
+  background: var(--topbar) !important;
+  border-bottom: 1px solid var(--topbar-border) !important;
+}}
+header[data-testid="stHeader"] * {{
+  color: #e6f0ff !important;
+}}
 
-/* Center content nicely */
-.block-container{
-  padding-top: 0 !important; padding-bottom: 0 !important;
-  min-height: 100dvh; display:flex; align-items:center; justify-content:center; max-width: 820px;
-}
-
-/* Card: glassy with subtle lift on hover */
-.card{
+.card{{
   width: min(560px, 96vw);
-  background: rgba(255,255,255,0.85) !important;
+  background: gray;
   border: 1px solid rgba(148,163,184,0.28);
   border-radius: 22px;
   padding: 28px 26px 24px;
   box-shadow: 0 24px 60px rgba(2,6,23,.18);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  transition: transform .18s ease, box-shadow .18s ease;
-}
-.card:hover{ transform: translateY(-1px); box-shadow: 0 28px 70px rgba(2,6,23,.22); }
-[data-theme="dark"] .card{
-  background: rgba(2,6,23,0.55) !important;
-  border-color: rgba(148,163,184,0.22);
-}
+  backdrop-filter: blur(16px);
+}}
 
-/* Title + tiny helper */
-.heading{ font-weight:900; font-size:28px; margin: 6px 0 4px 0; letter-spacing:.01em; }
-.subnote{ color:#64748b; margin: 0 0 14px 0; font-size:.94rem; }
-[data-theme="dark"] .subnote{ color:#94a3b8; }
+.heading{{ font-weight:900; font-size:50px; margin: 6px 0 4px 0; }}
+.subnote{{ color:black; margin: 0 0 14px 0; font-size:20px; }}
 
-/* Inputs: rounded, thicker padding, consistent background */
-.card [data-baseweb="input"] > div { border-radius: 14px; }
-.card .stTextInput>div>div>input,
-.card .stTextArea textarea {
-  background:#9ec2c45c !important;
-  color:#0f172a !important;
-  padding-top: 12px; padding-bottom: 12px;
-  font-weight:600;
-  border:1px solid rgba(0,0,0,.15) !important;
-  border-radius:12px !important;
-}
-[data-theme="dark"] .card .stTextInput>div>div>input,
-[data-theme="dark"] .card .stTextArea textarea {
-  background:#0b1220 !important; color:#e5e7eb !important; border-color:#1f2937 !important;
-}
-
-/* Focus ring: emerald glow */
-.card input:focus, .card textarea:focus {
-  outline:none !important;
-  box-shadow:0 0 0 4px rgba(16,185,129,.30) !important;
-  border-color:#10b981 !important;
-}
-
-/* Labels & checkbox text */
-.card label, .card .stCheckbox { color: inherit !important; font-weight:700; }
-
-/* Primary button (Create account): bold pill with micro-interaction */
-div.stButton > button {
-  height: 48px; width: 100%;
-  background: linear-gradient(90deg, #059669 0%, #10b981 100%) !important;
-  color:#fff !important; border-radius:999px !important; border:none !important;
-  font-weight:900 !important; letter-spacing:.02em;
-  box-shadow: 0 10px 18px rgba(2,6,23,.15);
-  transition: transform .06s ease, filter .12s ease;
-}
-div.stButton > button:hover { filter:brightness(1.04); }
-div.stButton > button:active { transform: translateY(1px); }
-
-/* Back to Login (centered) */
-.actions-row{ display:flex; justify-content:center; margin-top: 16px; }
-.actions-row .back-btn > button{
-  background:#10b981 !important; color:#fff !important; border:none !important;
-  border-radius:999px !important; padding:10px 22px !important; font-weight:900 !important;
-  box-shadow: 0 6px 14px rgba(2,6,23,.12);
-}
-
-/* Small helper text under inputs if needed */
-.tiny{ font-size:.85rem; color:#6b7280; }
-[data-theme="dark"] .tiny{ color:#9ca3af; }
+div.stButton > button {{
+  height: 48px;
+  width: auto;
+  padding: 0 40px;
+  background: #0a1c3d !important;
+  color: #fff !important;
+  border-radius: 999px !important;
+  border: none !important;
+  font-weight: 900 !important;
+  font-size: 1.1rem;
+  box-shadow: 0 6px 16px rgba(0,0,0,.4);
+}}
 </style>
+
 """,
     unsafe_allow_html=True,
 )
 
 # --------------------
-# Form card (markup unchanged except a subnote line)
+# Form card
 # --------------------
 st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<div class="heading">Create account</div>', unsafe_allow_html=True)
+st.markdown('<div class="heading">Create account 📝</div>', unsafe_allow_html=True)
 st.markdown('<div class="subnote">Fill the details below to get started.</div>', unsafe_allow_html=True)
 
 with st.form("register_form", clear_on_submit=False):
@@ -128,9 +150,12 @@ with st.form("register_form", clear_on_submit=False):
     pw        = st.text_input("Password", type="password")
     pw2       = st.text_input("Confirm password", type="password")
     agree     = st.checkbox("I agree to the terms")
-    submitted = st.form_submit_button("Create account")
 
-    # ---------- Submit handler (UNCHANGED) ----------
+    # Put button in rightmost column
+    left, mid, right = st.columns([2, 1, 1])
+    with right:
+        submitted = st.form_submit_button("Create account")
+
     if submitted:
         u  = (username or "").strip()
         p1 = (pw or "").strip()
@@ -149,13 +174,11 @@ with st.form("register_form", clear_on_submit=False):
                 if get_user(u):
                     st.error("This username already exists.")
                 else:
-                    # Note: create_user expects password=...
                     create_user(username=u, full_name=full_name, password=p1, scheme="sha256")
             except Exception as e:
                 st.error(f"Could not create account: {e}")
             else:
                 st.success("✅ Account created! Redirecting to Login…")
-                # Try multiple targets to be robust to filename/label
                 for target in ("pages/0_🔐_Login.py", "pages/0_Login.py", "🔐 Login"):
                     try:
                         st.switch_page(target)
@@ -168,12 +191,11 @@ with st.form("register_form", clear_on_submit=False):
 st.markdown("</div>", unsafe_allow_html=True)
 
 # --------------------
-# Back to Login (button + navigation — UNCHANGED behavior)
+# Back to Login button
 # --------------------
-st.write("")  # small spacing
+st.write("")
 c1, c2, c3 = st.columns([1, 1, 1])
 with c2:
-    st.markdown('<div class="actions-row"><div class="back-btn">', unsafe_allow_html=True)
     if st.button("Back to Login"):
         for target in ("pages/0_🔐_Login.py", "pages/0_Login.py", "🔐 Login"):
             try:
@@ -182,5 +204,7 @@ with c2:
             except Exception:
                 pass
         else:
+            qp = _get_qp_dict()
+            qp.update({"login": "1"})
+            _set_qp_dict(qp)
             st.rerun()
-    st.markdown('</div></div>', unsafe_allow_html=True)
