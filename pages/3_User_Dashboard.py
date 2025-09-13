@@ -82,6 +82,7 @@ if _bg64:
         .conf.med {{ background:#fffde7; color:#a16207; border:1px solid #fde68a; }}
         .conf.low {{ background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }}
         .whatif {{ background:rgba(255,255,255,.85); border-radius:12px; padding:12px; }}
+
         </style>
         """,
         unsafe_allow_html=True,
@@ -497,6 +498,63 @@ with left:
 with right:
     st.subheader("🔮 " + tr("Forecast", "අනාවැකිය"))
     go = st.button("🚀 " + tr("Predict Next 7 Days", "දින 7ක් අනාවැකිය"), type="primary", use_container_width=True)
+
+
+# NEW: Quick Insights (Today) under the button
+    try:
+        t = float(st.session_state.get("temp", 28.0))
+        rh = float(st.session_state.get("humidity", 75.0))
+        r  = float(st.session_state.get("precip", 0.0))
+        w  = float(st.session_state.get("windspeed", 10.0))
+        uv = float(st.session_state.get("uvindex", 7.0))
+
+        def drying_score_local(temp_c, rh, wind_kmh, rain_mm):
+            s = 0.8*(temp_c - 20) + 0.5*(80 - rh) + 0.4*wind_kmh
+            if rain_mm > 0: s -= 40
+            return float(s)
+
+        ds = drying_score_local(t, rh, w, r)
+        ds_tag = "Great" if ds >= 30 else ("Fair" if ds >= 10 else "Poor")
+        hi = heat_index_c(t, rh)
+        hi_tag = tr("Very High","වලංගු ඉහළ") if hi >= 41 else (tr("High","ඉහළ") if hi >= 32 else (tr("Moderate","මධ්‍ය") if hi >= 27 else tr("Low","අඩු")))
+        uv_tag = uv_risk(uv)
+        safe = is_rainsafe(None, r, w)
+
+        qi_html = f"""
+        <div class='card' style="margin-top:8px;">
+          <h3>✨ {tr('Quick Insights (Today)', 'ඉක්මන් අඳහස් (අද)')}</h3>
+          <div class='cards' style="grid-template-columns:repeat(4,minmax(0,1fr));">
+            <div class='card'>
+              <h3>🧺 {tr('Drying', 'වියළීම')}</h3>
+              <div class='big'>{ds_tag}</div>
+              <div>{tr('Score','ස්කෝර්')}: {ds:.0f}</div>
+              <small>{tr('Laundry/paint/concrete potential','වස්ත්‍ර/පේන්ට්/බෙටන් වියළීම')}</small>
+            </div>
+            <div class='card'>
+              <h3>🥵 {tr('Heat Index','උණ දර්ශකය')}</h3>
+              <div class='big'>{hi:.1f}°C</div>
+              <div>{tr('Risk','අපදාව')}: {hi_tag}</div>
+              <small>{tr('Hydrate; shade at midday','වතුර බොන්න; මධ්‍යහ්න ශේඩ්')}</small>
+            </div>
+            <div class='card'>
+              <h3>🌞 UV</h3>
+              <div class='big'>{uv:.1f}</div>
+              <div>{tr('Risk','අපදාව')}: {uv_tag.title()}</div>
+              <small>{tr('Prefer early/late outdoor work','අළුයම්/සවස වැඩ කරන්න')}</small>
+            </div>
+            <div class='card'>
+              <h3>🌂 {tr('Rain/Wind Safety','වැසි/සුළඟ ආරක්ෂාව')}</h3>
+              <div class='big'>{tr('Safe','ආරක්ෂිත') if safe else tr('Not Ideal','සුදුසු නැහැ')}</div>
+              <div>{tr('Rain','වැසි')}: {r:.1f} mm · {tr('Wind','සුළඟ')}: {w:.0f} km/h</div>
+              <small>{tr('Carry cover / adjust plans','ආවරණ ගන්න / සැලැස්ම වෙනස් කරන්න')}</small>
+            </div>
+          </div>
+        </div>
+        """
+        st.markdown(qi_html, unsafe_allow_html=True)
+    except Exception:
+        pass
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Forecast computation (runs only when button clicked)
