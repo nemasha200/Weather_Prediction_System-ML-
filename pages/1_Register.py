@@ -116,8 +116,8 @@ header[data-testid="stHeader"] * {{
   backdrop-filter: blur(16px);
 }}
 
-.heading{{ font-weight:900; font-size:50px; margin: 6px 0 4px 0; }}
-.subnote{{ color:black; margin: 0 0 14px 0; font-size:20px; }}
+.heading{{ font-weight:900; font-size:30px; margin: 6px 0 4px 0; }}
+.subnote{{ color:black; margin: 0 0 14px 0; font-size:15px; }}
 
 div.stButton > button {{
   height: 48px;
@@ -136,6 +136,15 @@ div.stButton > button {{
 """,
     unsafe_allow_html=True,
 )
+# Sidebar look
+st.markdown("""
+<style>
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0F3D7A 0%, #0A2B5E 50%, #062048 100%) !important;
+}
+section[data-testid="stSidebar"] * { color: #ffffff !important; }
+</style>
+""", unsafe_allow_html=True)
 
 # --------------------
 # Form card

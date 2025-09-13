@@ -9,6 +9,7 @@ from db import DB_PATH, hash_password, ensure_schema  # <-- use shared helpers
 
 st.set_page_config(page_title="Users", page_icon="👥", layout="wide")
 
+
 # ----------------------
 # Auth guard (redirect to Login if not logged in)
 # ----------------------
@@ -85,9 +86,22 @@ if isinstance(_raw_edit, list):
     _raw_edit = _raw_edit[0]
 edit_id = int(_raw_edit) if (_raw_edit and str(_raw_edit).isdigit()) else None
 
+
+
 # ----------------------
 # Styles
 # ----------------------
+
+# Sidebar look
+st.markdown("""
+<style>
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0F3D7A 0%, #0A2B5E 50%, #062048 100%) !important;
+}
+section[data-testid="stSidebar"] * { color: #ffffff !important; }
+</style>
+""", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 header[data-testid="stHeader"] { background-color:#003366 !important; }

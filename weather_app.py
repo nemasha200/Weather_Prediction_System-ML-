@@ -5,6 +5,7 @@ import streamlit as st, plotly.express as px, requests
 from tensorflow.keras.models import load_model
 import joblib
 
+
 st.set_page_config(page_title="7-Day Weather Forecast", layout="wide", page_icon="🌦️")
 
 # ---------- NAV HANDLERS (run BEFORE any st.stop) ----------

@@ -143,9 +143,9 @@ st.markdown(
       color: #fff;
     }}
 
-    .submini {{ color:black; font-size:1rem; letter-spacing:.10em; font-weight:800; }}
-    .heading {{ font-weight:900; font-size:2.5rem; margin:6px 0 2px; letter-spacing:.01em; }}
-    .hint {{ color:black; font-size:1.2rem; margin:0 0 14px; }}
+    .submini {{ color:black; font-size:15px; letter-spacing:.10em; font-weight:800; }}
+    .heading {{ font-weight:900; font-size:30px; margin:6px 0 2px; letter-spacing:.01em; }}
+    .hint {{ color:black; font-size:15px; margin:0 0 14px; }}
 
     .stTextInput>div>div>input {{ padding-top: 12px; padding-bottom: 12px; font-weight:600; }}
     .stTextInput label {{ font-weight: 700; }}
@@ -181,14 +181,25 @@ st.markdown(
       box-shadow: 0 10px 18px rgba(2,6,23,.15);
     }}
     .signup-row .pill-btn:active {{ transform: translateY(1px); }}
+    
     </style>
     """,
     unsafe_allow_html=True,
 )
+# Sidebar look
+st.markdown("""
+<style>
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0F3D7A 0%, #0A2B5E 50%, #062048 100%) !important;
+}
+section[data-testid="stSidebar"] * { color: #ffffff !important; }
+</style>
+""", unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # UI
 # ──────────────────────────────────────────────────────────────────────────────
+
 st.markdown('<div class="login-card">', unsafe_allow_html=True)
 st.markdown('<div class="submini">WELCOME BACK</div>', unsafe_allow_html=True)
 st.markdown('<div class="heading">Sign in to continue 🔐</div>', unsafe_allow_html=True)
