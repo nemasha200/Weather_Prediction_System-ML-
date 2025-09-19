@@ -94,7 +94,7 @@ def _is_admin(u: str, p: str) -> bool:
 if bg_b64:
     bg_css = f"""
     html, body, .stApp, [data-testid="stAppViewContainer"], section.main {{
-      background: lightblue;
+      background: white;
     }}
     body::before {{
       content: "";
@@ -116,7 +116,7 @@ st.markdown(
     :root {{
       --topbar: #0a1c3d;
       --topbar-border: rgba(255,255,255,.08);
-      --brand-blue: #0a1c3d;
+      --brand-blue: white;
     }}
 
     {bg_css}
@@ -134,9 +134,9 @@ st.markdown(
     }}
 
     .login-card {{
-      width: min(800px, 96vw);
+      width: min(600px, 78vw);
       padding: 28px 26px 24px 26px; border-radius: 22px;
-      background: rgba(0,0,0,0.55);
+      background: #0a3057;
       border: 1px solid rgba(148,163,184,0.28);
       backdrop-filter: blur(16px);
       box-shadow: 0 24px 60px rgba(2,6,23,.18);
@@ -186,6 +186,41 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+st.markdown("""
+<style>
+/* ==== Turn the inner form panel (white card) blue ==== */
+.login-card [data-testid="stForm"],
+.login-card div[data-testid="stForm"]{
+  background: #0b3d66 !important;            /* your blue */
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 18px 26px rgba(2,6,23,.12) !important;
+  padding: 18px !important;
+}
+
+/* Some Streamlit versions wrap the <form> with another div; keep that wrapper neutral */
+.login-card [data-testid="stForm"] > form,
+.login-card [data-testid="stForm"] > div {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Keep inputs readable on the blue background (optional) */
+.login-card [data-testid="stForm"] input,
+.login-card [data-testid="stForm"] textarea,
+.login-card [data-testid="stForm"] .stTextInput input {
+  background: #eef2f7 !important;
+  color: #0a0a0a !important;
+}
+.login-card [data-testid="stForm"] label,
+.login-card [data-testid="stForm"] .stCheckbox > label {
+  color: #e6f0ff !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Sidebar look
 st.markdown("""
 <style>

@@ -69,7 +69,7 @@ def _set_qp_dict(d: dict):
 if bg_b64:
     bg_css = f"""
     html, body, .stApp, [data-testid="stAppViewContainer"], section.main {{
-      background: lightblue;
+      background: white;
     }}
     body::before {{
       content: "";
@@ -108,7 +108,7 @@ header[data-testid="stHeader"] * {{
 
 .card{{
   width: min(560px, 96vw);
-  background: gray;
+  background: #0b3d66;
   border: 1px solid rgba(148,163,184,0.28);
   border-radius: 22px;
   padding: 28px 26px 24px;

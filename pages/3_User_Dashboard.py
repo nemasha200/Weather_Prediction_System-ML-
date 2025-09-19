@@ -87,6 +87,40 @@ if _bg64:
         """,
         unsafe_allow_html=True,
     )
+    # Global ASH styling for cards
+    st.markdown("""
+<style>
+/* ---- ASH (light grey) cards site-wide ---- */
+.card,
+.cards .card {
+  background: white !important;        
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+  color: #111827;
+}
+.flagged { background: rgba(230,230,230,.85) !important; }
+.whatif  { background: rgba(230,230,230,.85) !important; }
+.cards .card:hover { box-shadow: 0 6px 16px rgba(0,0,0,.12); }
+
+/* ---- Quick Insights MAIN wrapper (pink) ---- */
+.qi-main{
+  background:#edf7f7 !important;          
+  border:1px solid white;
+  border-radius:14px;
+  padding:14px;
+  margin-top:8px;
+  box-shadow:#;
+  color:#111827;
+}
+.qi-title{
+  font-weight:800; font-size:16px;
+  margin:0 0 8px 0; display:flex; gap:8px; align-items:center;
+}
+.qi-title .dot{width:8px;height:8px;border-radius:999px;background:black;}
+</style>
+""", unsafe_allow_html=True)
 
 # Sticky top header text + logout
 st.markdown(
@@ -100,7 +134,7 @@ header[data-testid="stHeader"]::before {
 .top-actions{position:fixed;top:70px;right:18px;z-index:9999;display:flex;gap:8px}
 .top-actions a{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.25);
 text-decoration:none;color:#fff !important;box-shadow:0 2px 6px rgba(0,0,0,.12);font-weight:700}
-.top-actions a.logout{background:green} .top-actions a.logout:hover{background:black}
+.top-actions a.logout{background:red} .top-actions a.logout:hover{background:black}
 </style>
 <div class="top-actions"><a class="logout" href="?logout=1">Logout</a></div>
 """,
@@ -125,7 +159,7 @@ div[data-testid="stAppViewContainer"] .stButton > button {
 /* Slightly darker on hover */
 div[data-testid="stAppViewContainer"] .stButton > button:hover,
 div[data-testid="stAppViewContainer"] .stButton > button:focus {
-  background-color: #ba9fd6 !important;   /* light blue 400 */
+  background-color: green !important;   /* light blue 400 */
   border-color: #60a5fa !important;
 }
 </style>
@@ -500,7 +534,7 @@ with right:
     go = st.button("🚀 " + tr("Predict Next 7 Days", "දින 7ක් අනාවැකිය"), type="primary", use_container_width=True)
 
 
-# NEW: Quick Insights (Today) under the button
+    # NEW: Quick Insights (Today) under the button — pink main + ash mini-cards
     try:
         t = float(st.session_state.get("temp", 28.0))
         rh = float(st.session_state.get("humidity", 75.0))
@@ -521,8 +555,8 @@ with right:
         safe = is_rainsafe(None, r, w)
 
         qi_html = f"""
-        <div class='card' style="margin-top:8px;">
-          <h3>✨ {tr('Quick Insights (Today)', 'ඉක්මන් අඳහස් (අද)')}</h3>
+        <div class='qi-main'>
+          <div class='qi-title'><span class="dot"></span>{tr('Quick Insights (Today)', 'ඉක්මන් අඳහස් (අද)')}</div>
           <div class='cards' style="grid-template-columns:repeat(4,minmax(0,1fr));">
             <div class='card'>
               <h3>🧺 {tr('Drying', 'වියළීම')}</h3>
@@ -750,7 +784,7 @@ def render_forecast_and_decisions():
             use_container_width=True,
         )
 
-    # ──────────────────────────────────────────────────────────────────────────
+     # ──────────────────────────────────────────────────────────────────────────
     # Agriculture: Decision Assistant
     # ──────────────────────────────────────────────────────────────────────────
     with t_agri:
@@ -883,6 +917,7 @@ def render_forecast_and_decisions():
             mime="text/plain",
             use_container_width=True,
         )
+
 
     # ──────────────────────────────────────────────────────────────────────────
     # Local Business: Decision Assistant
