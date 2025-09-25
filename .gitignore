@@ -12,3 +12,4 @@ venv/
 *.joblib
 # App artifacts 
 local_weather_model/
+*.pdf
